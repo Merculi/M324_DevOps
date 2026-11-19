@@ -1,0 +1,3 @@
+# SonarQube scanner output and local cache
+.scannerwork/
+.sonar/
