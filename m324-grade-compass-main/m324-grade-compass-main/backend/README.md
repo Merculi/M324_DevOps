@@ -77,6 +77,26 @@ Docker und PostgreSQL werden dafür **nicht** benötigt.
 
 Die Testberichte liegen danach in `target/surefire-reports/`.
 
+### Testarten
+
+- Unit-Tests: `GradeServiceTest` und `SubjectServiceTest` ersetzen das Repository mit `@Mock`.`CreateSubjectRequestTest` prüft die Validierung direkt ohne Spring.
+- Controller-Test: `SubjectControllerTest` lädt mit `@WebMvcTest` die Web-Schicht und ersetzt den Service mit `@MockitoBean`.
+- Repository-Test: `SubjectRepositoryTest` prüft mit `@DataJpaTest` den Datenbankzugriff in H2.
+- Integrationstests: `SubjectIntegrationTest` und `GradeCompassApplicationTests` starten mit `@SpringBootTest` den ganzen Spring-Kontext.
+
+### Test coverage
+
+Führen Sie im Ordner `backend` den Befehl `mvn verify` aus. Der JaCoCo-Bericht liegt danach unter `target/site/jacoco/index.html`.
+
+#### Nicht abgedeckte Methoden im ersten JaCoCo Bericht
+
+- `SubjectService.update()` – Fach ändern, 0 von 7 Zeilen abgedeckt.
+- `SubjectService.delete()` – Fach löschen, 0 von 4 Zeilen abgedeckt.
+- `GradeController.create()` – Note über `POST /api/grades` erstellen, 0 von 1 Zeile abgedeckt.
+- `GradeController.list()` – Noten über `GET /api/grades` abrufen, 0 von 1 Zeile abgedeckt.
+
+Fünf neue Unit-Tests prüfen `SubjectService.update()` und `delete()`. Sie decken die Namensänderung mit Trimming, das Löschen sowie die Fehlerfälle 404 und 409 ab.
+
 ## Bauen und als JAR ausführen
 
 ```bash
@@ -99,28 +119,28 @@ DB_URL=jdbc:postgresql://localhost:5432/gcdb DB_USER=gcdbUser DB_PASSWORD='gcdbP
 
 ## Weitere nützliche Maven-Befehle
 
-| Befehl | Erklärung |
-|---|---|
-| `./mvnw clean` | Löscht den Ordner `target/` (alle Build-Ergebnisse). |
-| `./mvnw clean install` | Baut das Projekt neu, führt die Tests aus und installiert das Artefakt ins lokale Maven-Repository (`~/.m2`). |
-| `./mvnw test-compile` | Kompiliert Code und Tests, ohne die Tests auszuführen. |
-| `./mvnw dependency:tree` | Zeigt alle Abhängigkeiten (inkl. transitiver) als Baum. Hilfreich bei Versionskonflikten. |
-| `./mvnw dependency:resolve` | Lädt alle Abhängigkeiten herunter (nützlich, um offline weiterzuarbeiten). |
-| `./mvnw versions:display-dependency-updates` | Zeigt verfügbare neuere Versionen der Abhängigkeiten an. |
-| `./mvnw help:effective-pom` | Zeigt die vollständige POM inkl. geerbter Werte vom Spring-Boot-Parent. |
-| `./mvnw -v` | Zeigt die verwendete Maven- und Java-Version. |
-| `./mvnw -o <ziel>` | Offline-Modus: Maven lädt nichts aus dem Internet (z. B. `./mvnw -o test`). |
-| `./mvnw -q <ziel>` | Quiet-Modus: nur Fehler werden ausgegeben. |
-| `./mvnw -X <ziel>` | Debug-Ausgabe von Maven, hilft bei der Fehlersuche im Build. |
-| `./mvnw -U <ziel>` | Erzwingt das erneute Herunterladen von Snapshots/Abhängigkeiten. |
+| Befehl                                       | Erklärung                                                                                                     |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `./mvnw clean`                               | Löscht den Ordner `target/` (alle Build-Ergebnisse).                                                          |
+| `./mvnw clean install`                       | Baut das Projekt neu, führt die Tests aus und installiert das Artefakt ins lokale Maven-Repository (`~/.m2`). |
+| `./mvnw test-compile`                        | Kompiliert Code und Tests, ohne die Tests auszuführen.                                                        |
+| `./mvnw dependency:tree`                     | Zeigt alle Abhängigkeiten (inkl. transitiver) als Baum. Hilfreich bei Versionskonflikten.                     |
+| `./mvnw dependency:resolve`                  | Lädt alle Abhängigkeiten herunter (nützlich, um offline weiterzuarbeiten).                                    |
+| `./mvnw versions:display-dependency-updates` | Zeigt verfügbare neuere Versionen der Abhängigkeiten an.                                                      |
+| `./mvnw help:effective-pom`                  | Zeigt die vollständige POM inkl. geerbter Werte vom Spring-Boot-Parent.                                       |
+| `./mvnw -v`                                  | Zeigt die verwendete Maven- und Java-Version.                                                                 |
+| `./mvnw -o <ziel>`                           | Offline-Modus: Maven lädt nichts aus dem Internet (z. B. `./mvnw -o test`).                                   |
+| `./mvnw -q <ziel>`                           | Quiet-Modus: nur Fehler werden ausgegeben.                                                                    |
+| `./mvnw -X <ziel>`                           | Debug-Ausgabe von Maven, hilft bei der Fehlersuche im Build.                                                  |
+| `./mvnw -U <ziel>`                           | Erzwingt das erneute Herunterladen von Snapshots/Abhängigkeiten.                                              |
 
 Wichtige Optionen:
 
-| Option | Erklärung |
-|---|---|
-| `-DskipTests` | Tests werden kompiliert, aber nicht ausgeführt. |
-| `-Dmaven.test.skip=true` | Tests werden weder kompiliert noch ausgeführt. |
-| `-Dtest=<Name>` | Nur die angegebene Testklasse bzw. -methode ausführen. |
+| Option                                | Erklärung                                                  |
+| ------------------------------------- | ---------------------------------------------------------- |
+| `-DskipTests`                         | Tests werden kompiliert, aber nicht ausgeführt.            |
+| `-Dmaven.test.skip=true`              | Tests werden weder kompiliert noch ausgeführt.             |
+| `-Dtest=<Name>`                       | Nur die angegebene Testklasse bzw. -methode ausführen.     |
 | `-Dspring-boot.run.profiles=<profil>` | Spring-Profil beim Start mit `spring-boot:run` aktivieren. |
 
 ## Aufräumen

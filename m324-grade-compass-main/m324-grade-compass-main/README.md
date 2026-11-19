@@ -15,11 +15,11 @@ Die Anwendung besteht aus drei Teilen: einem Angular-Frontend, einem Spring-Boot
 └──────────────────┘                  └──────────────────┘           └──────────────┘
 ```
 
-| Teil | Technologie | Ordner | Port |
-|---|---|---|---|
-| Frontend | Angular 22, Angular Material | [frontend/](frontend/) | 4200 |
-| Backend | Java 25, Spring Boot 4 (Web MVC, Data JPA, Validation) | [backend/](backend/) | 8080 |
-| Datenbank | PostgreSQL 18 (Docker) | [backend/compose.yaml](backend/compose.yaml) | 5432 |
+| Teil      | Technologie                                            | Ordner                                       | Port |
+| --------- | ------------------------------------------------------ | -------------------------------------------- | ---- |
+| Frontend  | Angular 22, Angular Material                           | [frontend/](frontend/)                       | 4200 |
+| Backend   | Java 25, Spring Boot 4 (Web MVC, Data JPA, Validation) | [backend/](backend/)                         | 8080 |
+| Datenbank | PostgreSQL 18 (Docker)                                 | [backend/compose.yaml](backend/compose.yaml) | 5432 |
 
 ### Backend
 
@@ -40,25 +40,24 @@ Weitere Details zum Package `subject` stehen in [backend/docs/subject-dokumentat
 
 ### REST-API
 
-| Methode | Pfad | Beschreibung |
-|---|---|---|
-| `GET` | `/api/subjects` | Alle Fächer abrufen |
-| `POST` | `/api/subjects` | Fach anlegen |
-| `PUT` | `/api/subjects/{id}` | Fach ändern |
-| `DELETE` | `/api/subjects/{id}` | Fach löschen |
-| `GET` | `/api/grades` | Alle Noten abrufen (in Arbeit, noch nicht im Frontend) |
-| `POST` | `/api/grades` | Note anlegen (in Arbeit, noch nicht im Frontend) |
+| Methode  | Pfad                 | Beschreibung                                           |
+| -------- | -------------------- | ------------------------------------------------------ |
+| `GET`    | `/api/subjects`      | Alle Fächer abrufen                                    |
+| `POST`   | `/api/subjects`      | Fach anlegen                                           |
+| `PUT`    | `/api/subjects/{id}` | Fach ändern                                            |
+| `DELETE` | `/api/subjects/{id}` | Fach löschen                                           |
+| `GET`    | `/api/grades`        | Alle Noten abrufen (in Arbeit, noch nicht im Frontend) |
+| `POST`   | `/api/grades`        | Note anlegen (in Arbeit, noch nicht im Frontend)       |
 
 ### Frontend
 
 Das Frontend ist eine Angular-App mit Standalone-Komponenten. Seiten:
 
-| Route | Beschreibung |
-|---|---|
-| `/` | Startseite: Tabelle aller Fächer mit Notenschnitt, verlinkt auf Fächer und Noten |
-| `/subjects` | Fächer anlegen, bearbeiten, löschen |
-| `/grades` | Pro Fach mehrere Noten erfassen (Noten können nur angelegt werden, es gibt noch kein Update/Delete im Backend) |
-
+| Route       | Beschreibung                                                                                                   |
+| ----------- | -------------------------------------------------------------------------------------------------------------- |
+| `/`         | Startseite: Tabelle aller Fächer mit Notenschnitt, verlinkt auf Fächer und Noten                               |
+| `/subjects` | Fächer anlegen, bearbeiten, löschen                                                                            |
+| `/grades`   | Pro Fach mehrere Noten erfassen (Noten können nur angelegt werden, es gibt noch kein Update/Delete im Backend) |
 
 Der `SubjectService` ([frontend/src/app/subjects/subject.service.ts](frontend/src/app/subjects/subject.service.ts)) spricht mit dem Backend.
 Die Backend-URL steht in [frontend/src/environments/](frontend/src/environments/) (`apiUrl`, Standard: `http://localhost:8080`).
@@ -93,11 +92,11 @@ docker compose up -d
 
 Das startet PostgreSQL auf Port 5432 mit diesen Standardwerten:
 
-| Einstellung | Wert |
-|---|---|
-| Datenbank | `gcdb` |
-| Benutzer | `gcdbUser` |
-| Passwort | `gcdbPassword123!` |
+| Einstellung | Wert               |
+| ----------- | ------------------ |
+| Datenbank   | `gcdb`             |
+| Benutzer    | `gcdbUser`         |
+| Passwort    | `gcdbPassword123!` |
 
 ### 3. Backend starten
 
@@ -132,6 +131,11 @@ Das Frontend läuft danach auf <http://localhost:4200>.
 cd backend
 ./mvnw test
 
+# Backend-Tests mit Make
+make test
+make clean
+#44 Tests ausgeführt, 0 fehlgeschlagen
+
 # Frontend (Vitest)
 cd frontend
 npm test
@@ -165,8 +169,34 @@ docker compose -f local/compose.yaml up -d
 SonarQube ist danach unter <http://localhost:9000> erreichbar (der erste Start dauert einen Moment).
 Die Konfiguration steht in [local/compose.yaml](local/compose.yaml), die Daten liegen in Docker-Volumes.
 
-> Das Projekt enthält bisher nur den SonarQube-Server. Eine Analyse-Konfiguration (Projekt, Token, Scanner)
-> ist noch nicht eingerichtet.
+Die Scanner-Konfiguration steht in [sonar-project.properties](sonar-project.properties). Sie analysiert das Java-Backend
+und das Angular-Frontend. Für die Testabdeckung verwendet SonarQube den JaCoCo-Bericht des Backends.
+
+Mit JDK 25 und GNU Make im Projektverzeichnis ausführen:
+
+```bash
+make coverage
+```
+
+`make coverage` führt die Backend-Tests aus, erstellt den JaCoCo-Bericht und kopiert die Java-Bibliotheken.
+`make linting` führt diesen Schritt aus und startet danach den Docker-Scanner im Netzwerk `sonar-net`.
+Unter Windows muss `JAVA_HOME` auf das JDK 25 zeigen. Falls PowerShell `make` aus einer MSYS2-Standardinstallation
+nicht findet, kann der Ordner `C:\msys64\usr\bin` für die laufende Sitzung zum `PATH` hinzugefügt werden.
+In PowerShell lässt sich der SonarQube-Token verdeckt eingeben:
+
+```powershell
+$env:SONAR_TOKEN = [System.Net.NetworkCredential]::new('', (Read-Host 'SonarQube-Token' -AsSecureString)).Password
+try {
+    make linting
+} finally {
+    Remove-Item Env:SONAR_TOKEN
+}
+```
+
+Die Ergebnisse erscheinen im [SonarQube-Projekt Notenkompass](http://localhost:9000/dashboard?id=grade-compass).
+Für den Vergleich der Befunde zuerst mit dem Standardprofil analysieren. Anschliessend unter
+**Project Settings → Quality Profiles** für Java, TypeScript, Web und CSS **Sonar way comprehensive**
+auswählen und `make linting` erneut starten.
 
 ## Aufräumen
 
